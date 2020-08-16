@@ -3,5 +3,24 @@
     "rules": "database.rules.json"
   },
   "functions": {
+  },
+  "emulators": {
+    "firestore": {
+      "port": "8080"
+    },
+    "ui": {
+      "enabled": true,      // Default is `true`
+      "host": "localhost",
+      "port": 4000         // If unspecified, see CLI log for selected port
+    },
+    "functions": {
+      "port": "5000"
+    },
+    "database": {
+      "port": "9000"
+    }
+    
+
   }
 }
+

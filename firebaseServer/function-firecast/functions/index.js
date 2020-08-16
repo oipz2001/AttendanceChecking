@@ -21,19 +21,41 @@ const functions = require('firebase-functions');
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const bodyParser = require('body-parser')
+// app.use(bodyParser)
+
+
+app.use(bodyParser.json());
+
+
+app.use(bodyParser.urlencoded({ extended: true }));
 const admin = require('firebase-admin');
+const { json } = require('body-parser');
 admin.initializeApp(functions.config().firebase);
 // Automatically allow cross-origin requests
 app.use(cors({ origin: true }));
 // build multiple CRUD interfaces:
-app.get('/matchmac', (req, res) => {
-  admin.database().ref('/regismac').on("value", function(data) {
-    console.log( data.val()["0"]);
-    for(x in data.val()){
-      console.log(data.val()[x]);
-      
+app.post('/matchmac', (req, res) => {
+  var clientWifi = req.body
+  console.log(clientWifi);
+  // for(x in clientWifi  )
+  // {
+  //   console.log(clientWifi[x].BSSID + "  " + clientWifi[x].level);
+  // }
+
+  admin.database().ref('/regisMac').on("value", function(data) {
+    for(x in clientWifi  )
+  {
+    console.log(clientWifi[x].BSSID + "  " + clientWifi[x].level );
+    if(data.val().includes(clientWifi[x].BSSID) && clientWifi[x].level>=-45){
+      res.send(true)
+      return
     }
-    res.send(data.val())
+  }
+    
+  res.send(false)
+  return
+  
   }, function (errorObject) {
     console.log("The read failed: " + errorObject.code);
   });
@@ -41,13 +63,18 @@ app.get('/matchmac', (req, res) => {
 });
 app.post('/regismac', (req, res) => {
   
-  const mac_addr = req.query.mac;
+  const data = req.body;
+  console.log(typeof( data));
+  console.log( data);
   
-  // insert เข้าไปใน Realtime Database แล้วส่ง response
-  admin.database().ref('/regismac').push({mac : mac_addr}).then(snapshot => {
-    // รีไดเรค (ด้วย code 303)ไปที่ url ของ Firebase console เพื่อดูข้อมูลที่เพิ่มเข้าไป
+  
+ 
+  admin.database().ref('/regisMac').set(data).then(snapshot => {
     res.send("Success register Mac")
-  });
+  }, function (errorObject) {
+    console.log("The read failed: " + errorObject.code);
+  })
+  
   
 });
 app.put('/', (req, res) => {
@@ -58,7 +85,7 @@ app.patch('/', (req, res) => {
 });
 app.delete('/removemac', (req, res) => {
   var key = req.query.item;
-  admin.database().ref('regismac/'+key).remove()
+  admin.database().ref('/regisMac').remove()
     .then(function() {
       res.send({ status: 'ok' });
     })
@@ -66,7 +93,7 @@ app.delete('/removemac', (req, res) => {
       console.log('Error deleting data:', error);
       res.send({ status: 'error', error: error });
     });
-  res.send('Hello DELETE by noomerZx')
+  
 });
 // Expose Express API as a single Cloud Function:
 exports.checkapp = functions.https.onRequest(app);
